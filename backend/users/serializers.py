@@ -29,13 +29,15 @@ class CustomUserSerializer(UserSerializer, serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        request = self.context.get('request').user
+        # request = self.context.get('request').user
         # aaa = self.instance
-        subscriber = obj.subscribers.instance.id
-        is_subscribe = request.subscribers.instance.id
-        is_subscribed = Follow.objects.filter(
-            following_id=subscriber, user_id=is_subscribe
-        ).first()
+        is_subscribed = User.objects.filter(
+            subscribers__user=obj).first()
+        # subscriber = obj.subscribers.instance.id
+        # is_subscribe = request.subscribers.instance.id
+        # is_subscribed = Follow.objects.filter(
+        #     following_id=subscriber, user_id=is_subscribe
+        # ).first()
         if is_subscribed:
             return True
         else:

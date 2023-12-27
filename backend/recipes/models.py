@@ -40,6 +40,7 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        default_related_name = 'ingredients'
 
     def __str__(self):
         return self.name
@@ -55,7 +56,7 @@ class Recipe(models.Model):
         'Название', max_length=200
     )
     image = models.ImageField(
-        upload_to='images/',
+        upload_to='recipes/images/',
     )
     text = models.TextField('Описание')
     ingredients = models.ManyToManyField(
@@ -64,7 +65,7 @@ class Recipe(models.Model):
         verbose_name='Ингредиенты',
         help_text='Удерживайте Ctrl для выбора нескольких вариантов'
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         Tag,
         through='RecipeTag',
         verbose_name='Теги',
@@ -105,6 +106,40 @@ class RecipeIngredient(models.Model):
             MinValueValidator(1)
         ]
     )
+
+    class Meta:
+        default_related_name = 'recipe_ingredients'
+
+    def __str__(self):
+        return f'{self.recipe} {self.ingredient}'
+
+
+class FavoriteRecipe(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='is_favorited')
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='is_favorited'
+    )
+
+    def __str__(self):
+        return f'{self.user} {self.recipe}'
+
+
+class ShoppingIngredient(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='is_in_shopping_cart')
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    amount = models.IntegerField(
+        default=1,
+        validators=[
+            MaxValueValidator(10000),
+            MinValueValidator(1)
+        ]
+    )
+
+    class Meta:
+        default_related_name = 'is_in_shopping_cart'
 
     def __str__(self):
         return f'{self.recipe} {self.ingredient}'

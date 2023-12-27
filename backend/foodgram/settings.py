@@ -8,10 +8,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-#0=f%b95(7g6!*b1s=9_0)-)x2t=$2s76$g=)jutqujle_g+g='
 
-DEBUG = True
+DEBUG = False
 # TODO нужно ли здесь приложение django_filters
-
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost 127.0.0.1').split()
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
-    # 'django_filters',
+    'django_filters',
 
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
