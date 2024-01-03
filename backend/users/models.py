@@ -2,21 +2,18 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 
-from foodgram.settings import (
-    EMAIL_MAX_LENGHT,
-    NAME_MAX_LENGTH
-)
+from foodgram.settings import USER_EMAIL_MAX_LENGHT, USER_NAME_MAX_LENGTH
 
 
 class CustomUser(AbstractUser):
 
     email = models.EmailField(
-        max_length=EMAIL_MAX_LENGHT,
+        max_length=USER_EMAIL_MAX_LENGHT,
         unique=True,
         verbose_name='Электронная почта'
     )
     username = models.CharField(
-        max_length=NAME_MAX_LENGTH, unique=True,
+        max_length=USER_NAME_MAX_LENGTH, unique=True,
         verbose_name='Ник-нейм пользователя',
         validators=[
             RegexValidator(
@@ -32,13 +29,13 @@ class CustomUser(AbstractUser):
         ]
     )
     first_name = models.CharField(
-        max_length=NAME_MAX_LENGTH, verbose_name='Имя'
+        max_length=USER_NAME_MAX_LENGTH, verbose_name='Имя'
     )
     last_name = models.CharField(
-        max_length=NAME_MAX_LENGTH, verbose_name='Фамилия'
+        max_length=USER_NAME_MAX_LENGTH, verbose_name='Фамилия'
     )
     password = models.CharField(
-        max_length=NAME_MAX_LENGTH, verbose_name='Пароль'
+        max_length=USER_NAME_MAX_LENGTH, verbose_name='Пароль'
     )
 
     class Meta:
@@ -49,8 +46,6 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
-
-# Пример подписок из проекта api_final_yatube
 
 
 class Follow(models.Model):
@@ -68,6 +63,7 @@ class Follow(models.Model):
     )
 
     class Meta:
+        ordering = ('user',)
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = [

@@ -1,30 +1,45 @@
-from rest_framework.response import Response
 from urllib.parse import quote
-from django.db.models import Avg
+
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from api.serializers import CreateRecipeSerializer, FavoriteSerializer, IngredientSerializer, RecipeSerializer, TagSerializer
-from api.pagination import PageSizeNumberPagination
-# from api.filters import CustomSearchFilter
-from recipes.models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, ShoppingIngredient, Tag
-# from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.decorators import action
-from rest_framework import permissions, viewsets, filters, status
-from rest_framework.pagination import LimitOffsetPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q
-# from api.permissions import AdminModeratorOwnerOrReadOnly, IsAdminOrReadOnly
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+)
+from rest_framework.response import Response
+
+from api.filters import IngredientSearchFilter
+from api.pagination import PageSizeNumberPagination
+from api.permissions import IsOwnerOrReadOnly
+from api.serializers import (
+    CreateRecipeSerializer,
+    FavoriteSerializer,
+    IngredientSerializer,
+    RecipeSerializer,
+    TagSerializer
+)
+from recipes.models import (
+    FavoriteRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingIngredient,
+    Tag
+)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
     pagination_class = None
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('^name',)
-    # permission_classes = (IsAdminOrReadOnly,)
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientSearchFilter
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,53 +51,56 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    # serializer_class = RecipeSerializer
+
     http_method_names = ('delete', 'get', 'patch', 'post')
-    # filter_backends = (CustomSearchFilter,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
     pagination_class = PageSizeNumberPagination
-    # filterset_fields = ('author',)
 
     def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.user,
-        )
+        serializer.save(author=self.request.user,)
 
     def get_serializer_class(self):
         """Выбирает сериализатор, в зависимости от метода запроса."""
-        if self.request.method == ('GET' or 'DELETE'):
+        if self.request.method == 'GET':
             return RecipeSerializer
         return CreateRecipeSerializer
 
     def get_queryset(self):
+        """Получаем рецепты зависимо от query-параметров запроса."""
         queryset = self.queryset
-        # Добыть параметр color из GET-запроса
         is_favorited = self.request.query_params.get('is_favorited')
         is_in_shopping_cart = self.request.query_params.get(
-            'is_in_shopping_cart')
+            'is_in_shopping_cart'
+        )
         author_id = self.request.query_params.get('author')
-        tags = self.request.query_params.get('tags')
+        tags = self.request.query_params.getlist('tags')
 
-        if tags:
+        if tags and len(tags) == 2:
             queryset = Recipe.objects.filter(
-                tags_slug=tags
+                Q(tags__slug=tags[0]) | Q(tags__slug=tags[1])
             )
+        elif tags and len(tags) == 1:
+            queryset = Recipe.objects.filter(tags__slug=tags[0])
+
         if author_id:
             queryset = Recipe.objects.filter(
                 author_id=int(author_id)
             )
-        if is_favorited == '1':
+
+        if is_favorited == '1' and self.request.user.id:
             queryset = Recipe.objects.filter(
                 is_favorited__user=self.request.user
             )
-        elif is_favorited == '0':
+        elif is_favorited == '0' and self.request.user.id:
             queryset = Recipe.objects.filter(
                 ~Q(is_favorited__user=self.request.user)
             )
-        if is_in_shopping_cart == '1':
+
+        if is_in_shopping_cart == '1' and self.request.user.id:
             queryset = Recipe.objects.filter(
                 is_in_shopping_cart__user=self.request.user
             )
-        elif is_in_shopping_cart == '0':
+        elif is_in_shopping_cart == '0' and self.request.user.id:
             queryset = Recipe.objects.filter(
                 ~Q(is_in_shopping_cart__user=self.request.user)
             )
@@ -90,17 +108,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['post', 'delete'],
+        methods=['POST', 'DELETE'],
         permission_classes=[IsAuthenticated]
     )
     def favorite(self, request, pk):
-        # FavoriteRecipe.objects.all().delete()
-        recipe = get_object_or_404(Recipe, id=pk)
+        """Добвляем или удаляем рецепт из избранного."""
         favorite = FavoriteRecipe.objects.filter(
-            user=request.user, recipe=recipe
+            user=request.user, recipe_id=pk
         ).first()
 
         if request.method == 'POST':
+            recipe = Recipe.objects.filter(id=pk).first()
+            if not recipe:
+                raise ValidationError(
+                    'Такой рецепт не найден!'
+                )
             if favorite:
                 return Response(
                     'Рецепт уже добавлен в избранное.',
@@ -110,8 +132,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=request.user, recipe=recipe
             )
             serializer = FavoriteSerializer(recipe)
-            return Response(serializer.data)
-
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        get_object_or_404(Recipe, id=pk)
         if not favorite:
             return Response(
                 'Такого рецепта нет в избранном.', status.HTTP_400_BAD_REQUEST
@@ -123,30 +145,37 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['post', 'delete'],
+        methods=['POST', 'DELETE'],
         permission_classes=[IsAuthenticated]
     )
     def shopping_cart(self, request, pk):
-        # ShoppingIngredient.objects.all().delete()
-        recipe = get_object_or_404(Recipe, id=pk)
-        buy = ShoppingIngredient.objects.filter(
-            user=request.user, recipe=recipe
-        ).first()
-
+        """Добавляем или удаляем рецепт из списка покупок."""
         if request.method == 'POST':
+            recipe = Recipe.objects.filter(id=pk).first()
+            if not recipe:
+                raise ValidationError(
+                    'Такой рецепт не найден!'
+                )
+            buy = ShoppingIngredient.objects.filter(
+                user=request.user, recipe=recipe
+            ).first()
             if buy:
                 return Response(
                     'Рецепт уже добавлен в список покупок.',
                     status.HTTP_400_BAD_REQUEST
                 )
-            # FavoriteRecipe.objects.create(
-            #     user=request.user, recipe=recipe
-            # )
-            # ingredients = recipe.ingredients.all()
+
             for ingredient in recipe.ingredients.all():
-                amount = RecipeIngredient.objects.get(
+                # TODO Если учитывать что в таблице может быть только один
+                # TODO такой ингредиент то норм
+                # TODO, а если нет то всё ломается
+                # TODO можно ли в список добавить больше одного рецепта
+                # amount = RecipeIngredient.objects.get(
+                #     ingredient=ingredient, recipe=recipe
+                # ).amount
+                amount = RecipeIngredient.objects.filter(
                     ingredient=ingredient, recipe=recipe
-                ).amount
+                ).first().amount
                 ShoppingIngredient.objects.create(
                     user=request.user,
                     recipe=recipe,
@@ -154,11 +183,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     amount=amount
                 )
             serializer = FavoriteSerializer(recipe)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+        recipe = get_object_or_404(Recipe, id=pk)
+        buy = ShoppingIngredient.objects.filter(
+            user=request.user, recipe=recipe
+        ).first()
         if not buy:
             return Response(
-                'Такого рецепта нет в списке покупок.', status.HTTP_400_BAD_REQUEST
+                'Такого рецепта нет в списке покупок.',
+                status.HTTP_400_BAD_REQUEST
             )
         ShoppingIngredient.objects.filter(
             user=request.user, recipe=recipe
@@ -173,6 +207,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
+        """Скачать список покупок в файле .txt."""
         purchases_list = []
         purchases = {}
         purchase_models = ShoppingIngredient.objects.filter(user=request.user)
@@ -180,7 +215,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             name = purchase.ingredient.name
             amount = purchase.amount
-            # purchases_list = [*purchases_list, [name, amount]]
             if name in purchases:
                 purchases[name] += amount
             else:
@@ -188,8 +222,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         for name, amount in purchases.items():
             string = f'- {name}: {amount}'
             purchases_list.append(string)
-            # purchases_list[name] = amount
-        # purchases_list
         # TODO Разобрать этот код
         purchases_list = '\n'.join(purchases_list)
         filename = 'my-purchases.txt'
@@ -198,12 +230,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = (
             f'attachment; filename="{quoted_filename}"'
         )
-        # filename = "my-purchases.txt"
-        # response = HttpResponse(
-        #     purchases_list, content_type='text/plain'
-        # )
-        # response['Content-Disposition'] = 'attachment; filename={0}'.format(
-        #     filename)
         return response
         # with open('outfile.txt', 'w') as fw:
         #     fw.write(purchases_list)

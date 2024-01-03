@@ -1,8 +1,29 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 
-from users.models import CustomUser
+from users.models import CustomUser, Follow
 
-# Не добавляем поля через UserAdmin.fieldsets,
-# а сразу регистрируем модель в админке:
-admin.site.register(CustomUser, UserAdmin)
+admin.site.empty_value_display = 'Не задано'
+
+
+@admin.register(CustomUser)
+class UserAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'email',
+        'username',
+        'first_name',
+        'last_name'
+    )
+    search_fields = (
+        'email',
+        'username'
+    )
+
+
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'user',
+        'following'
+    )

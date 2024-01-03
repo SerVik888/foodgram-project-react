@@ -1,8 +1,12 @@
-# from rest_framework import filters
+from django_filters import CharFilter, FilterSet
+
+from recipes.models import Ingredient
 
 
-# class CustomSearchFilter(filters.SearchFilter):
-#     def get_search_fields(self, view, request):
-#         if request.query_params.get('author'):
-#             return ['id']
-#         return super().get_search_fields(view, request)
+class IngredientSearchFilter(FilterSet):
+    """Фильтр для ингредиентов."""
+    name = CharFilter(field_name='name', lookup_expr='istartswith')
+
+    class Meta:
+        model = Ingredient
+        fields = ('name',)
