@@ -40,8 +40,9 @@ class FoodgramUserViewSet(UserViewSet):
     )
     def subscriptions(self, request):
         """Получаем подписки принадлежащий пользователю."""
+
         subscribed_users = []
-        subscribes = request.user.subscribers.all()
+        subscribes = request.user.followings.all()
         paginator = PageSizeNumberPagination()
         result_page = paginator.paginate_queryset(subscribes, request)
 

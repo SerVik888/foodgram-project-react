@@ -23,6 +23,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'author',
         'get_short_text',
         'cooking_time',
+        'created_at',
         'get_favorite_count',
         'image_tag',
     )

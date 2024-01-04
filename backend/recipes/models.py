@@ -98,9 +98,10 @@ class Recipe(models.Model):
             MinValueValidator(MIN_COOKING_TIME)
         ]
     )
+    created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('created_at',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         default_related_name = 'recipes'
