@@ -6,7 +6,6 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly
@@ -120,8 +119,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             recipe = Recipe.objects.filter(id=pk).first()
             if not recipe:
-                raise ValidationError(
-                    'Такой рецепт не найден!'
+                return Response(
+                    'Такой рецепт не найден!',
+                    status.HTTP_400_BAD_REQUEST
                 )
             if favorite:
                 return Response(
@@ -153,8 +153,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             recipe = Recipe.objects.filter(id=pk).first()
             if not recipe:
-                raise ValidationError(
-                    'Такой рецепт не найден!'
+                return Response(
+                    'Такой рецепт не найден!',
+                    status.HTTP_400_BAD_REQUEST
                 )
             buy = ShoppingIngredient.objects.filter(
                 user=request.user, recipe=recipe

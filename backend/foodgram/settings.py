@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
-    'pages.apps.PagesConfig',
 
 ]
 
@@ -61,13 +60,13 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'foodgram.urls'
 
-# TEMPLATES_DIR = BASE_DIR / 'templates'
+TEMPLATES_DIR = BASE_DIR / 'templates'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        # 'DIRS': [TEMPLATES_DIR],
+        # 'DIRS': [],
+        'DIRS': [TEMPLATES_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -140,6 +139,7 @@ REST_FRAMEWORK = {
 
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 3,
+    'EXCEPTION_HANDLER': 'api.utils.page_not_found'
 }
 
 DJOSER = {
@@ -160,6 +160,9 @@ DJOSER = {
     }
 }
 
+# INTERNAL_IPS = [
+#     '127.0.0.1',
+# ]
 
 """ Language code English 'en-us'
     Language code Russian 'ru-RU'"""
@@ -182,6 +185,7 @@ STATIC_URL = '/static/'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'collected_static'
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
