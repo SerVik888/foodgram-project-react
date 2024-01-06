@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
 
-# from django.core.management.utils import get_random_secret_key
+from django.core.management.utils import get_random_secret_key
 from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv()
+
 MIN_COOKING_TIME = 1
 MAX_COOKING_TIME = 3600
 MIN_AMOUNT = 1
@@ -16,18 +17,11 @@ USER_EMAIL_MAX_LENGHT = 254
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-#0=f%b95(7g6!*b1s=9_0)-)x2t=$2s76$g=)jutqujle_g+g='
+SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 
-DEBUG = True
-# TODO нужно ли здесь приложение django_filters
-ALLOWED_HOSTS = ['localhost',
-                 '127.0.0.1']
+DEBUG = os.getenv('DEBUG', '').lower() == 'true'
 
-# SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
-
-# DEBUG = os.getenv('DEBUG', '').lower() == 'true'
-
-# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost 127.0.0.1').split()
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost 127.0.0.1').split()
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -65,7 +59,6 @@ TEMPLATES_DIR = BASE_DIR / 'templates'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # 'DIRS': [],
         'DIRS': [TEMPLATES_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -80,15 +73,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
-
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-# В режиме debug нормально работает при обычном запуске сервера падает
+# TODO Не понимаю почему при использовании дебаггера
+# TODO а в обычном режиме не работает просит хост
+# TODO 'could not translate host name "db" to address: Unknown host'
 # if os.getenv('DB_SQLIGTH'):
 #     DATABASES = {
 #         'default': {
@@ -127,9 +120,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'api.permissions.IsOwnerOrReadOnly',
-        # 'djoser.permissions.CurrentUserOrAdminOrReadOnly',
-        # 'rest_framework.permissions.IsAuthenticated',
         'rest_framework.permissions.AllowAny',
     ],
 
@@ -145,8 +135,6 @@ REST_FRAMEWORK = {
 DJOSER = {
     'HIDE_USERS': False,
     'PERMISSIONS': {
-
-        # 'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
         # TODO Прочему не работает пермиссион здесь?
         'current_user': ['rest_framework.permissions.IsAuthenticated'],
         'user_list': ['rest_framework.permissions.AllowAny'],
@@ -159,10 +147,6 @@ DJOSER = {
         'user_list': 'users.serializers.CustomUserSerializer',
     }
 }
-
-# INTERNAL_IPS = [
-#     '127.0.0.1',
-# ]
 
 """ Language code English 'en-us'
     Language code Russian 'ru-RU'"""
@@ -180,14 +164,7 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-
-# STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
-
-STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'collected_static'
-
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

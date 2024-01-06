@@ -48,7 +48,8 @@ class FoodgramUserViewSet(UserViewSet):
 
         for subscription in result_page:
             # Получаем связанного пользователя для каждой подписки
-            subscribed_user = subscription.following
+            subscribed_user = subscription.user
+            # subscribed_user = subscription.following
             subscribed_users.append(subscribed_user)
 
         serializer = self.get_serializer(

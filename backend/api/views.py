@@ -167,13 +167,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
 
             for ingredient in recipe.ingredients.all():
-                # TODO Если учитывать что в таблице может быть только один
-                # TODO такой ингредиент то норм
-                # TODO, а если нет то всё ломается
-                # TODO можно ли в список добавить больше одного рецепта
-                # amount = RecipeIngredient.objects.get(
-                #     ingredient=ingredient, recipe=recipe
-                # ).amount
                 amount = RecipeIngredient.objects.filter(
                     ingredient=ingredient, recipe=recipe
                 ).first().amount
