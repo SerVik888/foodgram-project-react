@@ -218,17 +218,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
             purchases_list.append(string)
         # TODO Разобрать этот код
         purchases_list = '\n'.join(purchases_list)
-        filename = 'my-purchases.txt'
-        quoted_filename = quote(filename)
-        response = HttpResponse(purchases_list, content_type='text/plain')
-        response['Content-Disposition'] = (
-            f'attachment; filename="{quoted_filename}"'
-        )
-        return response
-        # with open('outfile.txt', 'w') as fw:
-        #     fw.write(purchases_list)
+        # filename = 'my-purchases.txt'
+        # quoted_filename = quote(filename)
+        # response = HttpResponse(purchases_list, content_type='text/plain')
+        # response['Content-Disposition'] = (
+        #     f'attachment; filename="{quoted_filename}"'
+        # )
+        # return response
+        with open('outfile.txt', 'w') as fw:
+            fw.write(purchases_list)
         # content = open("uploads/something.txt").read()
-        # return HttpResponse(purchases_list, content_type='text/plain')
+        return HttpResponse(purchases_list, content_type='text/plain')
 
     @action(
         detail=False,
