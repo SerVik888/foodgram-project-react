@@ -1,5 +1,5 @@
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -211,13 +211,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             purchases_list.append(string)
 
         purchases_list = '\n'.join(purchases_list)
-        response = HttpResponse(purchases_list, content_type='text/plain')
-        response['Content-Disposition'] = (
-            'attachment; filename={0}'.format('shoppint_list.txt')
-        )
-        response.content = purchases_list.encode('cp1251')
-
-        return response
+        with open('shopping_list.txt', 'w') as file:
+            file.write(purchases_list)
+            file.close()
+        return FileResponse(open('shopping_list.txt', 'rb'))
 
     @action(
         detail=False,
