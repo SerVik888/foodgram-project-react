@@ -11,7 +11,6 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 
 from api.filters import IngredientSearchFilter
-from api.pagination import PageSizeNumberPagination
 from api.permissions import IsOwnerOrReadOnly
 from api.serializers import (
     CreateUpdateRecipeSerializer,
@@ -51,7 +50,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     http_method_names = ('delete', 'get', 'patch', 'post')
     permission_classes = (IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly)
-    pagination_class = PageSizeNumberPagination
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,)

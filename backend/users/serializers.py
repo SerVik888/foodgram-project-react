@@ -37,9 +37,6 @@ class CustomUserSerializer(UserSerializer, serializers.ModelSerializer):
             is_subscribed = Follow.objects.filter(
                 following_id=is_subscribe, user_id=subscriber
             ).first()
-            # is_subscribed = Follow.objects.filter(
-            #     following_id=subscriber, user_id=is_subscribe
-            # ).first()
             if is_subscribed:
                 return True
             else:

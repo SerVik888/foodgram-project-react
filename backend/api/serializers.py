@@ -173,7 +173,6 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
         recipe = get_object_or_404(
             Recipe, id=instance.id
         )
-        # ingredients = RecipeIngredient.objects.filter(recipe=recipe)
         ingredients = validated_data.get('ingredients')
         tags = validated_data.get('tags')
         recipe.tags.set(tags)
@@ -183,12 +182,6 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
                 recipe=recipe,
                 defaults={"amount": ingredient.get('amount')}
             )
-        # for ingredient in ingredients:
-        #     RecipeIngredient.objects.update_or_create(
-        #         ingredient_id=ingredient.get('id').id,
-        #         recipe=recipe,
-        #         amount=ingredient.get('amount')
-        #     )
         instance.save()
         return instance
 

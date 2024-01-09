@@ -4,14 +4,10 @@ from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly
-)
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.pagination import PageSizeNumberPagination
-from api.permissions import IsOwnerOrReadOnly
 from users.models import Follow
 
 User = get_user_model()
@@ -20,9 +16,6 @@ User = get_user_model()
 class FoodgramUserViewSet(UserViewSet):
     """Обрабатывает запрос на получение, создание, редактирование,
     удаления пользователей и подписок."""
-
-    # permission_classes = (IsOwnerOrReadOnly,)
-    pagination_class = PageSizeNumberPagination
 
     @action(
         detail=False,
@@ -47,9 +40,7 @@ class FoodgramUserViewSet(UserViewSet):
         result_page = paginator.paginate_queryset(subscribes, request)
 
         for subscription in result_page:
-            # Получаем связанного пользователя для каждой подписки
             subscribed_user = subscription.user
-            # subscribed_user = subscription.following
             subscribed_users.append(subscribed_user)
 
         serializer = self.get_serializer(
