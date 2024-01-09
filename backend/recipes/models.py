@@ -101,7 +101,7 @@ class Recipe(models.Model):
     created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
 
     class Meta:
-        ordering = ('created_at',)
+        ordering = ('-created_at',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         default_related_name = 'recipes'
@@ -113,6 +113,11 @@ class Recipe(models.Model):
 class RecipeTag(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Тег рецепта'
+        verbose_name_plural = 'Теги рецепта'
+        default_related_name = 'tag_recipe'
 
     def __str__(self):
         return f'{self.recipe} {self.tag}'
@@ -130,6 +135,8 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
+        verbose_name = 'Ингредиент рецепта'
+        verbose_name_plural = 'Ингредиенты рецепта'
         default_related_name = 'recipe_ingredients'
 
     def __str__(self):
@@ -158,10 +165,10 @@ class ShoppingIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.IntegerField(
-        default=1,
+        default=MIN_AMOUNT,
         validators=[
-            MaxValueValidator(10000),
-            MinValueValidator(1)
+            MaxValueValidator(MAX_AMOUNT),
+            MinValueValidator(MIN_AMOUNT)
         ]
     )
 

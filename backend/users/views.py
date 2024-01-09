@@ -21,7 +21,7 @@ class FoodgramUserViewSet(UserViewSet):
     """Обрабатывает запрос на получение, создание, редактирование,
     удаления пользователей и подписок."""
 
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
+    # permission_classes = (IsOwnerOrReadOnly,)
     pagination_class = PageSizeNumberPagination
 
     @action(

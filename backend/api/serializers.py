@@ -122,7 +122,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             return False
 
 
-class CreateRecipeSerializer(serializers.ModelSerializer):
+class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True,
@@ -171,16 +171,24 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         recipe = get_object_or_404(
-            Recipe, id=instance.id)
+            Recipe, id=instance.id
+        )
+        # ingredients = RecipeIngredient.objects.filter(recipe=recipe)
         ingredients = validated_data.get('ingredients')
         tags = validated_data.get('tags')
         recipe.tags.set(tags)
         for ingredient in ingredients:
-            RecipeIngredient.objects.update(
+            RecipeIngredient.objects.update_or_create(
                 ingredient_id=ingredient.get('id').id,
                 recipe=recipe,
-                amount=ingredient.get('amount')
+                defaults={"amount": ingredient.get('amount')}
             )
+        # for ingredient in ingredients:
+        #     RecipeIngredient.objects.update_or_create(
+        #         ingredient_id=ingredient.get('id').id,
+        #         recipe=recipe,
+        #         amount=ingredient.get('amount')
+        #     )
         instance.save()
         return instance
 

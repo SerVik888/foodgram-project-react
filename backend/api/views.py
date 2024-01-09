@@ -1,5 +1,3 @@
-from urllib.parse import quote
-
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -16,7 +14,7 @@ from api.filters import IngredientSearchFilter
 from api.pagination import PageSizeNumberPagination
 from api.permissions import IsOwnerOrReadOnly
 from api.serializers import (
-    CreateRecipeSerializer,
+    CreateUpdateRecipeSerializer,
     FavoriteSerializer,
     IngredientSerializer,
     RecipeSerializer,
@@ -52,7 +50,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
 
     http_method_names = ('delete', 'get', 'patch', 'post')
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
+    permission_classes = (IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly)
     pagination_class = PageSizeNumberPagination
 
     def perform_create(self, serializer):
@@ -62,7 +60,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Выбирает сериализатор, в зависимости от метода запроса."""
         if self.request.method == 'GET':
             return RecipeSerializer
-        return CreateRecipeSerializer
+        return CreateUpdateRecipeSerializer
 
     def get_queryset(self):
         """Получаем рецепты зависимо от query-параметров запроса."""
@@ -75,23 +73,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         tags = self.request.query_params.getlist('tags')
 
         if tags and len(tags) == 2:
-            queryset = Recipe.objects.filter(
-                Q(tags__slug=tags[0]) | Q(tags__slug=tags[1])
-            )
+            queryset = Recipe.objects.filter(tags__slug__in=tags).distinct()
         elif tags and len(tags) == 1:
             queryset = Recipe.objects.filter(tags__slug=tags[0])
 
         if author_id:
-            queryset = Recipe.objects.filter(
+            queryset = queryset.filter(
                 author_id=int(author_id)
             )
 
         if is_favorited == '1' and self.request.user.id:
-            queryset = Recipe.objects.filter(
+            queryset = queryset.filter(
                 is_favorited__user=self.request.user
             )
         elif is_favorited == '0' and self.request.user.id:
-            queryset = Recipe.objects.filter(
+            queryset = queryset.filter(
                 ~Q(is_favorited__user=self.request.user)
             )
 
@@ -197,38 +193,35 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        methods=['get'],
+        methods=['GET'],
         permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
-        """Скачать список покупок в файле .txt."""
+        """Скачать список покупок в файле."""
         purchases_list = []
         purchases = {}
         purchase_models = ShoppingIngredient.objects.filter(user=request.user)
-        for purchase in purchase_models:
 
+        for purchase in purchase_models:
             name = purchase.ingredient.name
             amount = purchase.amount
             if name in purchases:
                 purchases[name] += amount
             else:
                 purchases[name] = amount
+
         for name, amount in purchases.items():
             string = f'- {name}: {amount}'
             purchases_list.append(string)
-        # TODO Разобрать этот код
+
         purchases_list = '\n'.join(purchases_list)
-        # filename = 'my-purchases.txt'
-        # quoted_filename = quote(filename)
-        # response = HttpResponse(purchases_list, content_type='text/plain')
-        # response['Content-Disposition'] = (
-        #     f'attachment; filename="{quoted_filename}"'
-        # )
-        # return response
-        with open('outfile.txt', 'w') as fw:
-            fw.write(purchases_list)
-        # content = open("uploads/something.txt").read()
-        return HttpResponse(purchases_list, content_type='text/plain')
+        response = HttpResponse(purchases_list, content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename={0}'.format('shoppint_list.txt')
+        )
+        response.content = purchases_list.encode('cp1251')
+
+        return response
 
     @action(
         detail=False,
