@@ -1,6 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
-from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -33,7 +31,6 @@ class FoodgramUserViewSet(UserViewSet):
     )
     def subscriptions(self, request):
         """Получаем подписки принадлежащий пользователю."""
-
         subscribed_users = []
         subscribes = request.user.followings.all()
         paginator = PageSizeNumberPagination()
@@ -56,30 +53,22 @@ class FoodgramUserViewSet(UserViewSet):
     )
     def subscribe(self, request, id):
         """Создаём или удаляем подписку."""
-        subscriber = get_object_or_404(User, id=id)
+        request.data['method'] = request.method
+        subscriber = User.objects.filter(id=id).first()
+        serializer = self.get_serializer(
+            subscriber, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         if request.method == 'POST':
-            serializer = self.get_serializer(subscriber)
-            try:
-                Follow.objects.create(
-                    following=self.request.user,
-                    user=subscriber,
-                )
-            except IntegrityError:
-                return Response(
-                    'Вы уже подписаны на этого пользователя'
-                    ' или пытаетесь подписаться на себя!',
-                    status.HTTP_400_BAD_REQUEST
-                )
-            return Response(serializer.data, status.HTTP_201_CREATED)
-
-        subscription = Follow.objects.filter(
-            following_id=self.request.user.id, user_id=id
-        ).first()
-        if not subscription:
-            return Response(
-                'Вы не подписаны на этого пользователя.',
-                status.HTTP_400_BAD_REQUEST
+            Follow.objects.create(
+                following=self.request.user,
+                user=subscriber,
             )
-        subscription.delete()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        Follow.objects.filter(
+            following_id=self.request.user.id, user_id=id
+        ).delete()
         return Response('Подписка удалена.', status.HTTP_204_NO_CONTENT)

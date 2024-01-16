@@ -1,19 +1,18 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
-
-from foodgram.settings import USER_EMAIL_MAX_LENGHT, USER_NAME_MAX_LENGTH
 
 
 class CustomUser(AbstractUser):
 
     email = models.EmailField(
-        max_length=USER_EMAIL_MAX_LENGHT,
+        max_length=settings.USER_EMAIL_MAX_LENGHT,
         unique=True,
         verbose_name='Электронная почта'
     )
     username = models.CharField(
-        max_length=USER_NAME_MAX_LENGTH, unique=True,
+        max_length=settings.USER_NAME_MAX_LENGTH, unique=True,
         verbose_name='Ник-нейм пользователя',
         validators=[
             RegexValidator(
@@ -29,14 +28,16 @@ class CustomUser(AbstractUser):
         ]
     )
     first_name = models.CharField(
-        max_length=USER_NAME_MAX_LENGTH, verbose_name='Имя'
+        max_length=settings.USER_NAME_MAX_LENGTH, verbose_name='Имя'
     )
     last_name = models.CharField(
-        max_length=USER_NAME_MAX_LENGTH, verbose_name='Фамилия'
+        max_length=settings.USER_NAME_MAX_LENGTH, verbose_name='Фамилия'
     )
     password = models.CharField(
-        max_length=USER_NAME_MAX_LENGTH, verbose_name='Пароль'
+        max_length=settings.USER_NAME_MAX_LENGTH, verbose_name='Пароль'
     )
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
         ordering = ('username',)

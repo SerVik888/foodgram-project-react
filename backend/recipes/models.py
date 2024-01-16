@@ -1,19 +1,8 @@
+from colorfield.fields import ColorField
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.validators import (
-    MaxValueValidator,
-    MinValueValidator,
-    RegexValidator
-)
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
-from foodgram.settings import (
-    COLOR_MAX_LENGTH,
-    MAX_AMOUNT,
-    MAX_COOKING_TIME,
-    MIN_AMOUNT,
-    MIN_COOKING_TIME,
-    PECIPE_NAME_MAX_LENGTH
-)
 
 User = get_user_model()
 
@@ -21,21 +10,15 @@ User = get_user_model()
 class Tag(models.Model):
     name = models.CharField(
         'Тег',
-        max_length=PECIPE_NAME_MAX_LENGTH,
+        max_length=settings.PECIPE_NAME_MAX_LENGTH,
         unique=True,
     )
-    color = models.CharField('Цвет', max_length=COLOR_MAX_LENGTH, unique=True)
+    color = ColorField()
 
     slug = models.SlugField(
         'Тег',
-        max_length=PECIPE_NAME_MAX_LENGTH,
-        unique=True,
-        validators=[
-            RegexValidator(
-                r'^[-a-zA-Z0-9_]+$',
-                'Вы не можете создать такой slug.'
-            ),
-        ]
+        max_length=settings.PECIPE_NAME_MAX_LENGTH,
+        unique=True
     )
 
     class Meta:
@@ -48,13 +31,15 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField('Ингредиент', max_length=PECIPE_NAME_MAX_LENGTH)
+    name = models.CharField(
+        'Ингредиент', max_length=settings.PECIPE_NAME_MAX_LENGTH)
     measurement_unit = models.CharField(
         'Еденица измерения',
-        max_length=PECIPE_NAME_MAX_LENGTH
+        max_length=settings.PECIPE_NAME_MAX_LENGTH
     )
 
     class Meta:
+        unique_together = ('name', 'measurement_unit')
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         default_related_name = 'ingredients'
@@ -71,7 +56,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название',
-        max_length=PECIPE_NAME_MAX_LENGTH
+        max_length=settings.PECIPE_NAME_MAX_LENGTH
     )
     image = models.ImageField(
         'Изображение',
@@ -90,12 +75,12 @@ class Recipe(models.Model):
         verbose_name='Теги',
         help_text='Удерживайте Ctrl для выбора нескольких вариантов'
     )
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         'Время',
-        default=MIN_COOKING_TIME,
+        default=settings.MIN_COOKING_TIME,
         validators=[
-            MaxValueValidator(MAX_COOKING_TIME),
-            MinValueValidator(MIN_COOKING_TIME)
+            MaxValueValidator(settings.MAX_COOKING_TIME),
+            MinValueValidator(settings.MIN_COOKING_TIME)
         ]
     )
     created_at = models.DateTimeField('Дата публикации', auto_now_add=True)
@@ -126,11 +111,11 @@ class RecipeTag(models.Model):
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.IntegerField(
-        default=MIN_AMOUNT,
+    amount = models.PositiveSmallIntegerField(
+        default=settings.MIN_AMOUNT,
         validators=[
-            MaxValueValidator(MAX_AMOUNT),
-            MinValueValidator(MIN_AMOUNT)
+            MaxValueValidator(settings.MAX_AMOUNT),
+            MinValueValidator(settings.MIN_AMOUNT)
         ]
     )
 
@@ -143,39 +128,28 @@ class RecipeIngredient(models.Model):
         return f'{self.recipe} {self.ingredient}'
 
 
-class FavoriteRecipe(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE
-    )
-    recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE
-    )
+class RecipeUserBase(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f'{self.user} {self.recipe}'
+
+
+class FavoriteRecipe(RecipeUserBase):
 
     class Meta:
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
         default_related_name = 'is_favorited'
 
-    def __str__(self):
-        return f'{self.user} {self.recipe}'
 
-
-class ShoppingIngredient(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.IntegerField(
-        default=MIN_AMOUNT,
-        validators=[
-            MaxValueValidator(MAX_AMOUNT),
-            MinValueValidator(MIN_AMOUNT)
-        ]
-    )
+class ShoppingRecipe(RecipeUserBase):
 
     class Meta:
         verbose_name = 'Ингредиент для покупки'
         verbose_name_plural = 'Ингредиенты для покупки'
         default_related_name = 'is_in_shopping_cart'
-
-    def __str__(self):
-        return f'{self.recipe} {self.ingredient}'

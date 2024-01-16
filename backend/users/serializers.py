@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound, ValidationError
 
 from recipes.models import Recipe
 from users.models import Follow
@@ -30,18 +31,13 @@ class CustomUserSerializer(UserSerializer, serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        """Подписан пользователь на текущего или нет."""
-        if obj.id and self.context.get('request'):
-            subscriber = obj.subscribers.instance.id
-            is_subscribe = self.context.get('request').user.id
-            is_subscribed = Follow.objects.filter(
-                following_id=is_subscribe, user_id=subscriber
-            ).first()
-            if is_subscribed:
-                return True
-            else:
-                return False
-        return False
+        """Подписан текущий пользователь на другого или нет."""
+        if not self.context or not self.context.get('request').user.id:
+            return False
+        return obj.subscribers.filter(
+            following_id=self.context.get('request').user.id,
+            user_id=obj.subscribers.instance.id
+        ).exists()
 
     def to_representation(self, instance):
         """Добавляем рецепты и возможность менять их колличество в ответ."""
@@ -64,6 +60,24 @@ class CustomUserSerializer(UserSerializer, serializers.ModelSerializer):
                 representation['recipes'] = serializer.data
                 representation['recipes_count'] = recipes.count()
         return representation
+
+    def validate(self, data):
+        method = self.initial_data.get('method')
+        current_user = self.context.get('request').user
+        subscribed = Follow.objects.filter(
+            following=current_user, user=self.instance
+        ).exists()
+
+        if not self.instance:
+            raise NotFound(detail='Такой пользователь не найден!', code=404)
+        if (subscribed or current_user == self.instance) and method == 'POST':
+            raise ValidationError(
+                'Подписка уже существует или '
+                'вы пытаетесь подписаться на самого себя.'
+            )
+        if not subscribed and method == 'DELETE':
+            raise ValidationError('Такой подписки не существует.')
+        return data
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
