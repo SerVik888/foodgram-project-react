@@ -1,10 +1,18 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import ValidationError
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag
+from recipes.models import (
+    FavoriteRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingRecipe,
+    Tag
+)
 from users.serializers import CustomUserSerializer
 
 User = get_user_model()
@@ -80,18 +88,22 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, obj):
-        if not self.context or not self.context.get('request').user.id:
-            return False
-        return obj.is_favorited.all().filter(
-            user=self.context.get('request').user, recipe=obj
-        ).exists()
+        request = self.context.get('request')
+        return (
+            not (not self.context or not request.user.is_authenticated)
+            and obj.is_favorited.all().filter(
+                user=request.user, recipe=obj
+            ).exists()
+        )
 
     def get_is_in_shopping_cart(self, obj):
-        if not self.context or not self.context.get('request').user.id:
-            return False
-        return obj.is_in_shopping_cart.all().filter(
-            user=self.context.get('request').user, recipe=obj
-        ).exists()
+        request = self.context.get('request')
+        return (
+            not (not self.context or not request.user.is_authenticated)
+            and obj.is_in_shopping_cart.all().filter(
+                user=request.user, recipe=obj
+            ).exists()
+        )
 
 
 class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
@@ -138,6 +150,7 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
         ]
         RecipeIngredient.objects.bulk_create(ingredients)
 
+    @transaction.atomic
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -145,11 +158,11 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
             author=self.context.get('request').user,
             **validated_data
         )
-        for tag in tags:
-            RecipeTag.objects.create(recipe=recipe, tag=tag)
+        recipe.tags.set(tags)
         self.update_or_create_recipe_ingredients(recipe, ingredients)
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         self.update_or_create_recipe_ingredients(instance, ingredients)
@@ -165,7 +178,7 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
         return value
 
     def validate_tags(self, value):
-        if len(value) != len(list(set(value))):
+        if len(value) != len(set(value)):
             raise ValidationError('Нельзя добавлять одинаковые теги!')
         return value
 
@@ -177,31 +190,42 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
         ingredients_id = [
             ingredient.get('id') for ingredient in data.get('ingredients')
         ]
-        if len(ingredients_id) != len(list(set(ingredients_id))):
+        if len(ingredients_id) != len(set(ingredients_id)):
             raise ValidationError('Нельзя добавлять одинаковые ингредиенты!')
         return data
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
+class FavoriteShoppingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
+
+class FavoriteShoppingSerializerMixin(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return FavoriteShoppingSerializer(
+            instance.recipe, context=self.context
+        ).data
+
     def validate(self, data):
-
-        if not self.instance and self.initial_data.get('method') == 'POST':
-            raise ValidationError('Такой рецепт не найден!')
-        elif not self.instance:
-            raise NotFound(detail='Такой рецепт не найден!', code=404)
-
-        is_model = self.initial_data.get('model').objects.filter(
-            user=self.initial_data.get('user'), recipe=self.instance
-        ).exists()
-
-        if is_model and self.initial_data.get('method') == 'POST':
+        if self.Meta.model.objects.filter(
+            user=data.get('user'), recipe=data.get('recipe')
+        ).exists():
             raise ValidationError('Рецепт уже добавлен.')
-
-        if not is_model and self.initial_data.get('method') == 'DELETE':
-            raise ValidationError('Такого рецепта нет в списке.')
         return data
+
+
+class FavoriteRecipeSerializer(FavoriteShoppingSerializerMixin):
+
+    class Meta:
+        model = FavoriteRecipe
+        fields = ('user', 'recipe')
+
+
+class ShoppingRecipeSerializer(FavoriteShoppingSerializerMixin):
+
+    class Meta:
+        model = ShoppingRecipe
+        fields = ('user', 'recipe')

@@ -1,7 +1,9 @@
 from django.db.models import Sum
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly
@@ -12,9 +14,10 @@ from api.filters import IngredientSearchFilter, RecipeSearchFilter
 from api.permissions import IsOwnerOrReadOnly
 from api.serializers import (
     CreateUpdateRecipeSerializer,
-    FavoriteSerializer,
+    FavoriteRecipeSerializer,
     IngredientSerializer,
     RecipeSerializer,
+    ShoppingRecipeSerializer,
     TagSerializer
 )
 from api.utils import download_file
@@ -46,42 +49,30 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
 
     queryset = Recipe.objects.all()
-
     http_method_names = ('delete', 'get', 'patch', 'post')
     permission_classes = (IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeSearchFilter
 
-    def create_related_model(self, recipe, request, related_model):
-        """Создать связанную модель для рецепта."""
-        related_model.objects.create(
-            user=request.user, recipe=recipe
-        )
-
-    def delete_record(self, recipe, request, model):
-        """Удалить связанную модель для рецепта."""
-        model.objects.filter(
-            user=request.user, recipe=recipe
-        ).delete()
-
-    def use_favorite_serializer(
-            self, request, pk, creat_func, delete_func, model
+    def create_or_delete_related_record(
+            self, request, pk, related_model, serializer
     ):
-        request.data['model'] = model
-        request.data['method'] = request.method
-        request.data['user'] = request.user
-        recipe = Recipe.objects.filter(id=pk).first()
-        serializer = FavoriteSerializer(
-            recipe, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
+        """Функция для создания или удаления связанной с рецептом записи."""
         if request.method == 'POST':
-            creat_func(recipe, request, model)
+            serializer = serializer(
+                data={'user': request.user.id, 'recipe': pk},
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        delete_func(recipe, request, model)
+        get_object_or_404(Recipe, pk=pk)
+        if not related_model.objects.filter(
+            user=request.user, recipe_id=pk
+        ).exists():
+            raise ValidationError('Такого рецепта нет в списке.')
+        related_model.objects.filter(user=request.user, recipe_id=pk).delete()
         return Response(
             'Рецепт удалён из избранного.', status.HTTP_204_NO_CONTENT
         )
@@ -99,12 +90,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk):
         """Добвляем или удаляем рецепт из избранного."""
-        return self.use_favorite_serializer(
+        return self.create_or_delete_related_record(
             request,
             pk,
-            self.create_related_model,
-            self.delete_record,
-            FavoriteRecipe
+            FavoriteRecipe,
+            FavoriteRecipeSerializer
         )
 
     @action(
@@ -114,12 +104,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         """Добавляем или удаляем рецепт из списка покупок."""
-        return self.use_favorite_serializer(
+        return self.create_or_delete_related_record(
             request,
             pk,
-            self.create_related_model,
-            self.delete_record,
-            ShoppingRecipe
+            ShoppingRecipe,
+            ShoppingRecipeSerializer
         )
 
     @action(

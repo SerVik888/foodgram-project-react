@@ -1,12 +1,14 @@
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.pagination import PageSizeNumberPagination
 from users.models import Follow
+from users.serializers import FollowSerializer
 
 User = get_user_model()
 
@@ -33,7 +35,7 @@ class FoodgramUserViewSet(UserViewSet):
         """Получаем подписки принадлежащий пользователю."""
         subscribed_users = []
         subscribes = request.user.followings.all()
-        paginator = PageSizeNumberPagination()
+        paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(subscribes, request)
 
         for subscription in result_page:
@@ -52,23 +54,21 @@ class FoodgramUserViewSet(UserViewSet):
         permission_classes=[IsAuthenticated]
     )
     def subscribe(self, request, id):
-        """Создаём или удаляем подписку."""
-        request.data['method'] = request.method
-        subscriber = User.objects.filter(id=id).first()
-        serializer = self.get_serializer(
-            subscriber, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        """Функция для создания или удаления подписки."""
+        get_object_or_404(User, id=id)
 
         if request.method == 'POST':
-            Follow.objects.create(
-                following=self.request.user,
-                user=subscriber,
+            serializer = FollowSerializer(
+                data={'user': id, 'following': request.user.id},
+                context={'request': request}
             )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        Follow.objects.filter(
-            following_id=self.request.user.id, user_id=id
-        ).delete()
+        if not Follow.objects.filter(
+            following=request.user, user=id,
+        ).exists():
+            raise ValidationError('Вы не подписаны на этого пользователя.')
+        Follow.objects.filter(user=id, following=request.user).delete()
         return Response('Подписка удалена.', status.HTTP_204_NO_CONTENT)

@@ -9,16 +9,13 @@ User = get_user_model()
 
 class Tag(models.Model):
     name = models.CharField(
-        'Тег',
-        max_length=settings.PECIPE_NAME_MAX_LENGTH,
-        unique=True,
+        'Тег', max_length=settings.PECIPE_NAME_MAX_LENGTH, unique=True,
     )
-    color = ColorField()
-
+    color = ColorField(
+        'Цвет', default=settings.RANDOM_COLOR_STRING, unique=True
+    )
     slug = models.SlugField(
-        'Тег',
-        max_length=settings.PECIPE_NAME_MAX_LENGTH,
-        unique=True
+        'Слаг', max_length=settings.PECIPE_NAME_MAX_LENGTH, unique=True
     )
 
     class Meta:
@@ -39,10 +36,15 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        unique_together = ('name', 'measurement_unit')
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         default_related_name = 'ingredients'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name="unique_title_measurement_unit_pair"
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -134,6 +136,12 @@ class RecipeUserBase(models.Model):
 
     class Meta:
         abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name="unique_user_recipe_pair"
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} {self.recipe}'
