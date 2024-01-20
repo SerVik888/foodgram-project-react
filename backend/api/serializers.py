@@ -90,19 +90,23 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         return (
-            not (not self.context or not request.user.is_authenticated)
-            and obj.is_favorited.all().filter(
-                user=request.user, recipe=obj
-            ).exists()
+            request is not None and (
+                request.user.is_authenticated
+                and obj.is_favorited.all().filter(
+                    user=request.user, recipe=obj
+                ).exists()
+            )
         )
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         return (
-            not (not self.context or not request.user.is_authenticated)
-            and obj.is_in_shopping_cart.all().filter(
-                user=request.user, recipe=obj
-            ).exists()
+            request is not None and (
+                request.user.is_authenticated
+                and obj.is_in_shopping_cart.all().filter(
+                    user=request.user, recipe=obj
+                ).exists()
+            )
         )
 
 

@@ -67,12 +67,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        get_object_or_404(Recipe, pk=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
         if not related_model.objects.filter(
-            user=request.user, recipe_id=pk
+            user=request.user, recipe=recipe
         ).exists():
             raise ValidationError('Такого рецепта нет в списке.')
-        related_model.objects.filter(user=request.user, recipe_id=pk).delete()
+        related_model.objects.filter(user=request.user, recipe=recipe).delete()
         return Response(
             'Рецепт удалён из избранного.', status.HTTP_204_NO_CONTENT
         )

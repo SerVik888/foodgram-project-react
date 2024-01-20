@@ -34,11 +34,13 @@ class CustomUserSerializer(UserSerializer, serializers.ModelSerializer):
         """Подписан текущий пользователь на другого или нет."""
         request = self.context.get('request')
         return (
-            not (not self.context or not request.user.is_authenticated)
-            and obj.subscribers.filter(
-                following_id=request.user.id,
-                user_id=obj.subscribers.instance.id
-            ).exists()
+            request is not None and (
+                request.user.is_authenticated
+                and obj.followings.filter(
+                    following_id=obj.followings.instance.id,
+                    user_id=request.user.id
+                ).exists()
+            )
         )
 
     def to_representation(self, instance):
@@ -84,14 +86,14 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return CustomUserSerializer(
-            instance.user, context=self.context
+            instance.following, context=self.context
         ).data
 
     def validate(self, data):
         subscribed = Follow.objects.filter(
             following=data.get('following'), user=data.get('user')
         ).exists()
-        if subscribed or data.get('following') == data.get('user'):
+        if subscribed or data.get('user') == data.get('following'):
             raise ValidationError(
                 'Подписка уже существует или '
                 'вы пытаетесь подписаться на самого себя.'

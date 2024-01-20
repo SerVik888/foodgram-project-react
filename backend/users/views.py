@@ -34,12 +34,12 @@ class FoodgramUserViewSet(UserViewSet):
     def subscriptions(self, request):
         """Получаем подписки принадлежащий пользователю."""
         subscribed_users = []
-        subscribes = request.user.followings.all()
+        subscribes = request.user.subscribers.all()
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(subscribes, request)
 
         for subscription in result_page:
-            subscribed_user = subscription.user
+            subscribed_user = subscription.following
             subscribed_users.append(subscribed_user)
 
         serializer = self.get_serializer(
@@ -55,11 +55,11 @@ class FoodgramUserViewSet(UserViewSet):
     )
     def subscribe(self, request, id):
         """Функция для создания или удаления подписки."""
-        get_object_or_404(User, id=id)
+        following = get_object_or_404(User, id=id)
 
         if request.method == 'POST':
             serializer = FollowSerializer(
-                data={'user': id, 'following': request.user.id},
+                data={'following': id, 'user': request.user.id},
                 context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
@@ -67,8 +67,8 @@ class FoodgramUserViewSet(UserViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if not Follow.objects.filter(
-            following=request.user, user=id,
+            following=following, user=request.user,
         ).exists():
             raise ValidationError('Вы не подписаны на этого пользователя.')
-        Follow.objects.filter(user=id, following=request.user).delete()
+        Follow.objects.filter(user=request.user, following=following).delete()
         return Response('Подписка удалена.', status.HTTP_204_NO_CONTENT)

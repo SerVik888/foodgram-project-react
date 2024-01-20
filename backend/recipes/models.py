@@ -135,13 +135,8 @@ class RecipeUserBase(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
     class Meta:
+        ordering = ('-recipe__created_at',)
         abstract = True
-        constraints = [
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name="unique_user_recipe_pair"
-            )
-        ]
 
     def __str__(self):
         return f'{self.user} {self.recipe}'
@@ -149,15 +144,27 @@ class RecipeUserBase(models.Model):
 
 class FavoriteRecipe(RecipeUserBase):
 
-    class Meta:
+    class Meta(RecipeUserBase.Meta):
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
         default_related_name = 'is_favorited'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name="favorite_unique_user_recipe_pair"
+            )
+        ]
 
 
 class ShoppingRecipe(RecipeUserBase):
 
-    class Meta:
+    class Meta(RecipeUserBase.Meta):
         verbose_name = 'Ингредиент для покупки'
         verbose_name_plural = 'Ингредиенты для покупки'
         default_related_name = 'is_in_shopping_cart'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name="shopping_unique_user_recipe_pair"
+            )
+        ]
