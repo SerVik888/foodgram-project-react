@@ -32,7 +32,7 @@ class FoodgramUserViewSet(UserViewSet):
         permission_classes=[IsAuthenticated],
     )
     def subscriptions(self, request):
-        """Получаем подписки принадлежащий пользователю."""
+        """Получаем подписки принадлежащие пользователю."""
         subscribed_users = []
         subscribes = request.user.subscribers.all()
         paginator = self.pagination_class()
