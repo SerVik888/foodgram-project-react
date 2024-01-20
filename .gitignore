@@ -1,5 +1,5 @@
 #files
-
+docker-compose.yml
 shopping_list.txt
 
 # Byte-compiled / optimized / DLL files
@@ -138,3 +138,4 @@ dmypy.json
 
 # папки со статикой и медиа
 media/
+
