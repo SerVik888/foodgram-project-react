@@ -31,7 +31,7 @@ class CustomUserSerializer(UserSerializer, serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        """Подписан текущий пользователь на другого пользователя или нет."""
+        """Подписан текущий пользователь на другого или нет."""
         request = self.context.get('request')
         return (
             request is not None and (
