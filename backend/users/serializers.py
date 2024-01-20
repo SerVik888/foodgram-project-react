@@ -44,7 +44,7 @@ class CustomUserSerializer(UserSerializer, serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        """Добавляем рецепты и возможность менять их колличество в ответ."""
+        """Добавляем рецепты и возможность менять их колличество в ответе."""
         representation = super().to_representation(instance)
 
         if self.context.get('request'):
