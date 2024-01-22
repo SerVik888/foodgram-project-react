@@ -1,5 +1,5 @@
 # Проект Foodgram
-![event parameter](https://github.com/SerVik888/foodgram-project-react/actions/workflows/main.yml/badge.svg?event=push)
+![event parameter](https://github.com/SerVik888/foodgram-project-react/actions/workflows/main.yml/badge.svg?event=push)\
 *Адрес сайта - https://safonov-sergey.ru*
 
 ### Описание проекта foodgram
@@ -19,9 +19,9 @@ Foodgram - Это сеть, где люди могут размещать рец
 **При помощи docker**\
     Перед началом нужно установить и запустить Docker.\
     Перейти в папку infra выполнить команды\
-    `docker compose exec backend python manage.py migrate` -> выполнить миграции
-    `docker compose exec backend python manage.py createsuperuser` -> создать суперпользователя
-    `docker-compose up` -> запустить Docker Compose
+    `docker compose exec backend python manage.py migrate` -> выполнить миграции\
+    `docker compose exec backend python manage.py createsuperuser` -> создать суперпользователя\
+    `docker-compose up` -> запустить Docker Compose\
     `docker-compose stop` -> остановить Docker Compose
 
 *После запуска контейнеров будет доступна документация по адресу http://localhost/api/docs/.*
