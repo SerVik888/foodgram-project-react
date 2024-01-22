@@ -1,25 +1,6 @@
 version: '3.3'
-
-volumes:
-  media:
-  static:
-  pg_data:
-
 services:
-  db:
-    env_file: ../.env
-    image: postgres:13
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-  backend:
-    depends_on:
-      - db
-    build: ../backend
-    env_file: ../.env
-    volumes:
-      - static:/foodgram/backend_static
-      - media:/app/media
-  
+
   frontend:
     build:
       context: ../frontend
