@@ -110,4 +110,4 @@ jobs:
           push сделал ${{ github.actor }}
           сообщение коммита ${{ github.event.commits[0].message }}
           ссылка на коммит - https://github.com/${{ github.repository }}/commit/${{github.sha}}
-          Деплой kittygram успешно выполнен!
+          Деплой foodgram успешно выполнен!
