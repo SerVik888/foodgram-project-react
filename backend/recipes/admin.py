@@ -18,16 +18,17 @@ admin.site.empty_value_display = 'Не задано'
 class TagInline(admin.TabularInline):
     model = RecipeTag
     min_num = 1
+    extra = 0
 
 
 class IngredientInline(admin.TabularInline):
     model = RecipeIngredient
     min_num = 1
+    extra = 0
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    inlines = (TagInline, IngredientInline)
 
     list_display = (
         'get_short_name',
@@ -40,6 +41,7 @@ class RecipeAdmin(admin.ModelAdmin):
     )
     search_fields = ('name',)
     list_filter = ('author', 'tags',)
+    inlines = (TagInline, IngredientInline)
 
     @admin.display(description='Название')
     def get_short_name(self, obj):
