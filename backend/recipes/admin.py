@@ -6,6 +6,8 @@ from recipes.models import (
     FavoriteRecipe,
     Ingredient,
     Recipe,
+    RecipeIngredient,
+    RecipeTag,
     ShoppingRecipe,
     Tag
 )
@@ -13,8 +15,19 @@ from recipes.models import (
 admin.site.empty_value_display = 'Не задано'
 
 
+class TagInline(admin.TabularInline):
+    model = RecipeTag
+    min_num = 1
+
+
+class IngredientInline(admin.TabularInline):
+    model = RecipeIngredient
+    min_num = 1
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    inlines = (TagInline, IngredientInline)
 
     list_display = (
         'get_short_name',
