@@ -93,7 +93,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             request is not None and (
                 request.user.is_authenticated
                 and obj.is_favorited.all().filter(
-                    user=request.user, recipe=obj
+                    user=request.user
                 ).exists()
             )
         )
@@ -104,7 +104,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             request is not None and (
                 request.user.is_authenticated
                 and obj.is_in_shopping_cart.all().filter(
-                    user=request.user, recipe=obj
+                    user=request.user
                 ).exists()
             )
         )

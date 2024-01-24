@@ -49,7 +49,7 @@ class RecipeAdmin(admin.ModelAdmin):
             )
         return 'Не найдено'
 
-    @admin.display(description='Описание')
+    @admin.display(description='В избранном')
     def get_favorite_count(self, obj):
         """Сколько раз рецепт добавлен в избранное."""
         return FavoriteRecipe.objects.filter(recipe=obj).count()

@@ -29,7 +29,8 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     name = models.CharField(
-        'Ингредиент', max_length=settings.PECIPE_NAME_MAX_LENGTH)
+        'Ингредиент', max_length=settings.PECIPE_NAME_MAX_LENGTH
+    )
     measurement_unit = models.CharField(
         'Еденица измерения',
         max_length=settings.PECIPE_NAME_MAX_LENGTH
@@ -98,8 +99,10 @@ class Recipe(models.Model):
 
 
 class RecipeTag(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, verbose_name='Рецепт'
+    )
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, verbose_name='Тег')
 
     class Meta:
         verbose_name = 'Тег рецепта'
@@ -131,11 +134,15 @@ class RecipeIngredient(models.Model):
 
 
 class RecipeUserBase(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, verbose_name='Рецепт'
+    )
 
     class Meta:
-        ordering = ('-recipe__created_at',)
+        ordering = ('recipe__name',)
         abstract = True
 
     def __str__(self):

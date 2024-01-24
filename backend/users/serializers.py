@@ -37,7 +37,6 @@ class CustomUserSerializer(UserSerializer, serializers.ModelSerializer):
             request is not None and (
                 request.user.is_authenticated
                 and obj.followings.filter(
-                    following_id=obj.followings.instance.id,
                     user_id=request.user.id
                 ).exists()
             )
