@@ -108,14 +108,22 @@ class RecipeTag(models.Model):
         verbose_name = 'Тег рецепта'
         verbose_name_plural = 'Теги рецепта'
         default_related_name = 'tag_recipe'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('recipe', 'tag'),
+                name="unique_recipe_tag_pair"
+            )
+        ]
 
     def __str__(self):
         return f'{self.recipe} {self.tag}'
 
 
 class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, verbose_name='Рецепт')
+    ingredient = models.ForeignKey(
+        Ingredient, on_delete=models.CASCADE, verbose_name='Ингредиент')
     amount = models.PositiveSmallIntegerField(
         default=settings.MIN_AMOUNT,
         validators=[
@@ -128,6 +136,12 @@ class RecipeIngredient(models.Model):
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
         default_related_name = 'recipe_ingredients'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('recipe', 'ingredient'),
+                name="unique_recipe_ingredient_pair"
+            )
+        ]
 
     def __str__(self):
         return f'{self.recipe} {self.ingredient}'

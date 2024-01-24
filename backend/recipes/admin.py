@@ -15,16 +15,16 @@ from recipes.models import (
 admin.site.empty_value_display = 'Не задано'
 
 
-class TagInline(admin.TabularInline):
+class RecipeTagInline(admin.TabularInline):
     model = RecipeTag
-    min_num = 1
     extra = 0
+    min_num = 1
 
 
-class IngredientInline(admin.TabularInline):
+class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
-    min_num = 1
     extra = 0
+    min_num = 1
 
 
 @admin.register(Recipe)
@@ -41,7 +41,7 @@ class RecipeAdmin(admin.ModelAdmin):
     )
     search_fields = ('name',)
     list_filter = ('author', 'tags',)
-    inlines = (TagInline, IngredientInline)
+    inlines = (RecipeTagInline, RecipeIngredientInline)
 
     @admin.display(description='Название')
     def get_short_name(self, obj):
