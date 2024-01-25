@@ -136,12 +136,6 @@ class RecipeIngredient(models.Model):
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
         default_related_name = 'recipe_ingredients'
-        constraints = [
-            models.UniqueConstraint(
-                fields=('recipe', 'ingredient'),
-                name="unique_recipe_ingredient_pair"
-            )
-        ]
 
     def __str__(self):
         return f'{self.recipe} {self.ingredient}'
