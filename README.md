@@ -10,7 +10,6 @@ Foodgram - Это сеть, где люди могут размещать рец
 
 - Django
 - React
-- pytest
 - djangorestframework
 - Docker
 
