@@ -1,6 +1,6 @@
 # Проект Foodgram
 ![event parameter](https://github.com/SerVik888/foodgram-project-react/actions/workflows/main.yml/badge.svg?event=push)\
-*Адрес сайта - https://safonov-sergey.ru*\
+*Адрес сайта - https://safonov-sergey.ru* \
 *Документация - https://safonov-sergey.ru/api/docs/*
 
 ### Описание проекта:
