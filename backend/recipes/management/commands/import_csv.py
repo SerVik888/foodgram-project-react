@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = 'Import data from CSV files into the database'
 
     def handle_ingredients(self, *args, **kwargs):
-        with open('../data/ingredients.csv', 'r', encoding='utf-8') as csvfile:
+        with open('data/ingredients.csv', 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             objs = [
                 Ingredient(
@@ -21,7 +21,7 @@ class Command(BaseCommand):
             Ingredient.objects.bulk_create(objs)
 
     def handle_tags(self, *args, **kwargs):
-        with open('../data/tags.csv', 'r', encoding='utf-8') as csvfile:
+        with open('data/tags.csv', 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             objs = [
                 Tag(
@@ -35,5 +35,5 @@ class Command(BaseCommand):
             Tag.objects.bulk_create(objs)
 
     def handle(self, *args, **kwargs):
-        self.handle_ingredients()
         self.handle_tags()
+        self.handle_ingredients()
