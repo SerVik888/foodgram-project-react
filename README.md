@@ -7,7 +7,8 @@
 Foodgram - Это сеть, где люди могут размещать рецепты. Здесь можно добавить, изменить или удалить рецепты, но для этого нужно зарегистрироваться иначе данные доступны только для просмотра. Изменять данные чужих рецептов нельзя, они доступны только для просмотра. Так же вы можете добавлять любые рецепты в избранное и список покупок потом список покупок можно скачать файлом.
 
 ### Как запустить проект:
-`git clone git@github.com:SerVik888/foodgram-project-react.git` -> клонировать репозиторий
+`git clone git@github.com:SerVik888/foodgram-project-react.git` -> клонировать репозиторий\
+Примечание: если не получится импортировать ингредиенты и теги, придётся создать их в ручную, т.к. это необходимо для корректной работы приложения.
 
 **При помощи docker**\
     Перед началом нужно установить и запустить Docker.\
@@ -17,7 +18,7 @@ Foodgram - Это сеть, где люди могут размещать рец
     `docker compose exec backend cp -r /app/collected_static/. /backend_static/static/` -> копируем статику(backend) на volume\
     `docker compose exec backend python manage.py migrate` -> выполнить миграции\
     `docker compose exec backend python manage.py createsuperuser` -> создать суперпользователя\
-    `docker compose exec backend python manage.py import_csv` -> импорт ингредиентов и тегов в БД
+    `docker compose exec backend python manage.py import_csv` -> импорт ингредиентов и тегов в БД из файлов csv
 
 После запуска будут доступны следующие адреса:\
     - авторизация -> http://localhost:8080\
@@ -37,7 +38,7 @@ Foodgram - Это сеть, где люди могут размещать рец
 - pip -> 24.0
 
 Запуск **backend**\
-Примечание: для того что-бы использовать sqlite3 раскомментируйте этот блок(DATABASE) в файле backend/kittygram_backend/settings и закомментируйте блок с postgresql.
+Примечание: для того чтобы использовать sqlite3 раскомментируйте этот блок(DATABASE) в файле backend/kittygram_backend/settings и закомментируйте блок с postgresql.
 
 * Если у вас Linux/macOS\
     `python3 -m venv env` -> создать виртуальное окружение\
@@ -48,7 +49,7 @@ Foodgram - Это сеть, где люди могут размещать рец
     `python3 manage.py migrate` -> выполнить миграции\
     `python3 manage.py createsuperuser` -> создать суперпользователя\
     `python3 manage.py runserver` -> запустить проект\
-    `python3 manage.py import_csv` -> загрузка данных из файлов csv
+    `python3 manage.py import_csv` -> импорт ингредиентов и тегов в БД из файлов csv
 
 * Если у вас windows\
     `python -m venv venv` -> создать виртуальное окружение\
@@ -59,9 +60,9 @@ Foodgram - Это сеть, где люди могут размещать рец
     `python manage.py migrate` -> выполнить миграции\
     `python manage.py createsuperuser` -> создать суперпользователя\
     `python manage.py runserver` -> запустить проект\
-    `python manage.py import_csv` -> загрузка данных из файлов csv
+    `python manage.py import_csv` -> импорт ингредиентов и тегов в БД из файлов csv
 
-Запуск frontend нужно выполнять в другом терминале
+Запуск **frontend** нужно выполнять в другом терминале
 
 `cd frontend` -> перейти в папку\
 `npm i` или `npm i --force` -> установить зависимости\
@@ -85,7 +86,7 @@ Foodgram - Это сеть, где люди могут размещать рец
 - Docker
 
 ### Как заполнить файл .env:
-В проекте есть файлы .env.example заполните свой по аналогии.
+В проекте есть файлы .env.example заполните свои по аналогии.
 
 `POSTGRES_DB` - название базы\
 `POSTGRES_USER` - пользователь базы\
