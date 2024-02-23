@@ -21,8 +21,8 @@ Foodgram - Это сеть, где люди могут размещать рец
     `docker compose exec backend python manage.py import_csv` -> импорт ингредиентов и тегов в БД из файлов csv
 
 После запуска будут доступны следующие адреса:\
-    - авторизация -> http://localhost:8080\
-    - админка -> http://localhost:8080/admin/\
+    - авторизация -> http://localhost:8080 \
+    - админка -> http://localhost:8080/admin/ \
     - документация -> http://localhost:8080/api/docs/
 
 Дополнительные команды для работы:\
